@@ -339,6 +339,19 @@ header h1 {
     margin: 1rem 0;
 }
 
+/* Links in message content */
+.message-content a {
+    color: #93c5fd;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+}
+
+.message-content a:hover {
+    color: #dbeafe;
+    text-decoration: underline;
+}
+
 /* Chat Input Container */
 .chat-input-container {
     display: flex;
