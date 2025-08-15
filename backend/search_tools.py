@@ -1,6 +1,7 @@
-from typing import Dict, Any, Optional, Protocol
+from typing import Dict, Any, Optional, Protocol, List
 from abc import ABC, abstractmethod
 from vector_store import VectorStore, SearchResults
+from models import Source
 
 
 class Tool(ABC):
@@ -22,7 +23,7 @@ class CourseSearchTool(Tool):
     
     def __init__(self, vector_store: VectorStore):
         self.store = vector_store
-        self.last_sources = []  # Track sources from last search
+        self.last_sources: List[Source] = []  # Track sources from last search
     
     def get_tool_definition(self) -> Dict[str, Any]:
         """Return Anthropic tool definition for this tool"""
@@ -88,7 +89,7 @@ class CourseSearchTool(Tool):
     def _format_results(self, results: SearchResults) -> str:
         """Format search results with course and lesson context"""
         formatted = []
-        sources = []  # Track sources for the UI
+        sources: List[Source] = []  # Track structured sources for the UI
         
         for doc, meta in zip(results.documents, results.metadata):
             course_title = meta.get('course_title', 'unknown')
@@ -100,10 +101,17 @@ class CourseSearchTool(Tool):
                 header += f" - Lesson {lesson_num}"
             header += "]"
             
-            # Track source for the UI
-            source = course_title
+            # Create structured source object
+            source_text = course_title
+            lesson_link = None
+            
             if lesson_num is not None:
-                source += f" - Lesson {lesson_num}"
+                source_text += f" - Lesson {lesson_num}"
+                # Try to get lesson link from vector store
+                lesson_link = self.store.get_lesson_link(course_title, lesson_num)
+            
+            # Create Source object with proper structure
+            source = Source(text=source_text, url=lesson_link)
             sources.append(source)
             
             formatted.append(f"{header}\n{doc}")
@@ -139,7 +147,7 @@ class ToolManager:
         
         return self.tools[tool_name].execute(**kwargs)
     
-    def get_last_sources(self) -> list:
+    def get_last_sources(self) -> List[Source]:
         """Get sources from the last search operation"""
         # Check all tools for last_sources attribute
         for tool in self.tools.values():
