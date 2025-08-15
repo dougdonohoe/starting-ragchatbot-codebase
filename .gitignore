@@ -28,6 +28,7 @@ uploads/
 
 # Claude Code settings
 .claude/
+CLAUDE.local.md
 
 # OS
 .DS_Store
